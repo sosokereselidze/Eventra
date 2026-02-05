@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, Menu, X, User, LogOut, LayoutDashboard, Ticket, Search as SearchIcon, Calendar } from 'lucide-react';
@@ -17,7 +17,10 @@ import {
 export function Navbar() {
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const isAdminPage = location.pathname === '/admin';
 
   const [searchQuery, setSearchQuery] = useState('');
   const { data: events } = useEvents();
@@ -58,62 +61,64 @@ export function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="h-12 w-12 flex items-center justify-center overflow-hidden">
-              <img src="/eventra_logo.png" alt="Eventra Logo" className="w-full h-full object-contain" />
+          <Link to="/" className="flex items-center group">
+            <div className="h-14 w-14 flex items-center justify-center overflow-hidden">
+              <img src="/eventra_logo.png" alt="Eventra Logo" className="w-full h-full mt-2 object-contain" />
             </div>
             <span className="font-display font-bold text-2xl tracking-tight text-white">Eventra</span>
           </Link>
 
           {/* Search Bar */}
-          <div className="hidden lg:block relative max-w-xl w-full mx-8">
-            <form onSubmit={handleSearch} className="relative">
-              <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-              <Input
-                type="text"
-                placeholder="Search events, locations..."
-                className="pl-11 h-10 bg-white/10 border-none focus-visible:ring-primary/20 rounded-full text-white placeholder:text-zinc-500 w-full"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowSuggestions(true);
-                }}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              />
-            </form>
+          {!isAdminPage && (
+            <div className="hidden lg:block relative max-w-xl w-full mx-8">
+              <form onSubmit={handleSearch} className="relative">
+                <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                <Input
+                  type="text"
+                  placeholder="Search events, locations..."
+                  className="pl-11 h-10 bg-white/10 border-none focus-visible:ring-primary/20 rounded-full text-white placeholder:text-zinc-500 w-full"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                />
+              </form>
 
-            {/* Suggestions Dropdown */}
-            {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-[#25140e] border border-white/10 rounded-2xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="p-2">
-                  {suggestions.map((event) => (
-                    <button
-                      key={event.id}
-                      className="w-full flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl transition-colors text-left group"
-                      onMouseDown={() => handleSuggestionClick(event.id)}
-                    >
-                      {event.image_url ? (
-                        <img src={event.image_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                      ) : (
-                        <div className="h-10 w-10 rounded-lg bg-white/5 flex items-center justify-center text-zinc-500">
-                          <Calendar className="h-5 w-5" />
+              {/* Suggestions Dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-[#25140e] border border-white/10 rounded-2xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="p-2">
+                    {suggestions.map((event) => (
+                      <button
+                        key={event.id}
+                        className="w-full flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl transition-colors text-left group"
+                        onMouseDown={() => handleSuggestionClick(event.id)}
+                      >
+                        {event.image_url ? (
+                          <img src={event.image_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                        ) : (
+                          <div className="h-10 w-10 rounded-lg bg-white/5 flex items-center justify-center text-zinc-500">
+                            <Calendar className="h-5 w-5" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-white truncate group-hover:text-primary transition-colors">
+                            {event.title}
+                          </p>
+                          <p className="text-xs text-zinc-400 truncate">
+                            {event.location}
+                          </p>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate group-hover:text-primary transition-colors">
-                          {event.title}
-                        </p>
-                        <p className="text-xs text-zinc-400 truncate">
-                          {event.location}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
@@ -129,7 +134,7 @@ export function Navbar() {
                 )}
               </>
             )}
-            {isAdmin && (
+            {isAdmin && !isAdminPage && (
               <Link to="/admin" className="text-zinc-400 hover:text-white transition-colors">
                 Admin Panel
               </Link>
@@ -155,7 +160,7 @@ export function Navbar() {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  {isAdmin && (
+                  {isAdmin && !isAdminPage && (
                     <DropdownMenuItem asChild>
                       <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
                         <LayoutDashboard className="h-4 w-4" />
@@ -215,7 +220,7 @@ export function Navbar() {
                   )}
                 </>
               )}
-              {isAdmin && (
+              {isAdmin && !isAdminPage && (
                 <Link
                   to="/admin"
                   className="px-3 py-2 text-zinc-400 hover:text-white transition-colors"

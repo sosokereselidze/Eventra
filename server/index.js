@@ -17,6 +17,19 @@ const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 app.use(cors({ origin: ['http://localhost:8080', 'http://localhost:5173', 'http://127.0.0.1:8080', 'http://127.0.0.1:5173'], credentials: true }));
 app.use(express.json());
+
+// Middleware to ensure DB connection
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    await initializeDatabase();
+    next();
+  } catch (error) {
+    console.error('Database connection middleware error:', error);
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+});
+
 app.use('/uploads', express.static('public/uploads'));
 
 // Configure Multer for image uploads
@@ -657,4 +670,9 @@ async function startServer() {
   }
 }
 
-startServer();
+if (process.env.NODE_ENV !== 'production') {
+  startServer();
+}
+
+export default app;
+

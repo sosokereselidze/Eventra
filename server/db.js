@@ -9,9 +9,11 @@ let eventsCollection = null;
 let bookingsCollection = null;
 
 export async function connectDB() {
+    if (db) return db;
     try {
         await client.connect();
         console.log('✓ Connected to MongoDB');
+
 
         db = client.db();
         usersCollection = db.collection('users');
