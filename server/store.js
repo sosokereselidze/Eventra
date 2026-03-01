@@ -12,14 +12,6 @@ export async function initializeDatabase() {
   // Ensure Admin users exist using upsert logic
   const admins = [
     {
-      id: 'admin-uuid',
-      email: 'admin@example.com',
-      username: 'admin',
-      password: 'admin123',
-      name: 'Admin',
-      isAdmin: true
-    },
-    {
       id: 'sosok-admin-uuid',
       email: 'sosokereselidze0@example.com',
       username: 'sosokereselidze0',
@@ -66,7 +58,7 @@ export async function initializeDatabase() {
       description: 'The biggest outdoor music festival of the year. Three days of live performances.',
       date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
       location: 'Central Park, New York',
-      image_url: 'https://images.unsplash.com/photo-1533174072545-e8d4aa97edf9?auto=format&fit=crop&w=800', // Concert crowd
+      image_url: 'https://images.unsplash.com/photo-1459749411177-042180ce6739?auto=format&fit=crop&q=80&w=2070', // Concert crowd
       tickets_available: 5000,
       tickets_booked: 1200,
       price: 149,
@@ -78,7 +70,7 @@ export async function initializeDatabase() {
       description: 'Join industry leaders for keynotes, workshops, and networking.',
       date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
       location: 'Convention Center, San Francisco',
-      image_url: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=800', // Tech conference
+      image_url: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?auto=format&fit=crop&q=80&w=2012', // Tech conference
       tickets_available: 800,
       tickets_booked: 340,
       price: 299,
@@ -90,7 +82,7 @@ export async function initializeDatabase() {
       description: 'An evening of gourmet bites and fine wines from local vendors.',
       date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       location: 'Downtown Loft, Chicago',
-      image_url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=800', // Wine and food
+      image_url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&q=80&w=2070', // Wine and food
       tickets_available: 120,
       tickets_booked: 85,
       price: 79,
@@ -102,7 +94,7 @@ export async function initializeDatabase() {
       description: 'Annual marathon through the city. Half and full marathon options.',
       date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       location: 'City Center, Boston',
-      image_url: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=800', // Runner
+      image_url: 'https://images.unsplash.com/photo-1461896756913-c3b4f9fdcadb?auto=format&fit=crop&q=80&w=2070', // Runner
       tickets_available: 10000,
       tickets_booked: 4200,
       price: 55,
@@ -114,7 +106,7 @@ export async function initializeDatabase() {
       description: 'Exhibition of contemporary local artists. Wine and light refreshments.',
       date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
       location: 'Modern Art Space, Seattle',
-      image_url: 'https://images.unsplash.com/photo-1518998053901-5348d3969105?auto=format&fit=crop&w=800', // Art gallery
+      image_url: 'https://images.unsplash.com/photo-1518998053901-5348d3969105?auto=format&fit=crop&q=80&w=2070', // Art gallery
       tickets_available: 80,
       tickets_booked: 45,
       price: 25,
@@ -127,7 +119,7 @@ export async function initializeDatabase() {
       description: 'Deep dive into artificial intelligence and machine learning with top experts.',
       date: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
       location: 'Silicon Valley, CA',
-      image_url: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800', // Robot/AI
+      image_url: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=2070', // AI
       tickets_available: 500,
       tickets_booked: 150,
       price: 399,
@@ -139,7 +131,7 @@ export async function initializeDatabase() {
       description: 'A magical night of smooth jazz in the open air.',
       date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
       location: 'Botanical Gardens, Atlanta',
-      image_url: 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?auto=format&fit=crop&w=800', // Jazz
+      image_url: 'https://images.unsplash.com/photo-1514525253344-99a393967817?auto=format&fit=crop&q=80&w=1974', // Jazz
       tickets_available: 300,
       tickets_booked: 120,
       price: 65,

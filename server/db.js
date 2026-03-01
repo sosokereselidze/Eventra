@@ -15,7 +15,7 @@ export async function connectDB() {
         console.log('✓ Connected to MongoDB');
 
 
-        db = client.db();
+        db = client.db('eventra_db');
         usersCollection = db.collection('users');
         eventsCollection = db.collection('events');
         bookingsCollection = db.collection('bookings');
