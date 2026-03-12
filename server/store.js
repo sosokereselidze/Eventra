@@ -16,7 +16,7 @@ export async function initializeDatabase() {
     id: 'sosok-admin-uuid',
     email: 'sosokereselidze0@example.com',
     username: 'sosokereselidze0',
-    password: 'admin0',
+    password: process.env.ADMIN_PASSWORD || 'admin0',
     name: 'Sosok',
     isAdmin: true,
   };
