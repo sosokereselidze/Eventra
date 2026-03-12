@@ -1,11 +1,16 @@
-const API_URL = import.meta.env?.VITE_API_URL ?? 'http://localhost:3001';
-const TOKEN_KEY = 'eventflow_token';
-
 export function getApiUrl(path: string): string {
-  const base = (API_URL ?? '').replace(/\/$/, '');
+  const envUrl = import.meta.env.VITE_API_URL;
+  
+  // If VITE_API_URL is exactly "/api" or "api", and the path already starts with "/api"
+  // we just return the path directly to avoid "/api/api/..."
+  if ((envUrl === '/api' || envUrl === 'api') && path.startsWith('/api')) {
+    return path;
+  }
+
+  const base = (envUrl ?? 'http://localhost:3001').replace(/\/$/, '');
   const p = path.startsWith('/') ? path : `/${path}`;
   
-  // Prevent doubling /api if it's already in the base URL
+  // Safety check: if base and path both contain /api at the boundary
   if (base.endsWith('/api') && p.startsWith('/api/')) {
     return `${base}${p.substring(4)}`;
   }
