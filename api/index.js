@@ -47,13 +47,19 @@ app.use(cors({
 
 app.use(express.json());
 
-// Middleware to ensure DB connection
+// Middleware to ensure DB connection and initialization
+let dbInitialized = false;
 app.use(async (req, res, next) => {
   try {
     await connectDB();
+    if (!dbInitialized) {
+      await initializeDatabase();
+      dbInitialized = true;
+      console.log('✓ Database initialized');
+    }
     next();
   } catch (error) {
-    console.error('Database connection middleware error:', error);
+    console.error('Database initialization error:', error);
     res.status(500).json({ error: 'Database connection failed' });
   }
 });
@@ -646,7 +652,7 @@ async function startServer() {
   }
 }
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' && process.env.RUN_SERVER !== 'false') {
   startServer();
 }
 
