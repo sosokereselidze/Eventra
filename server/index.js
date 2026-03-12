@@ -347,58 +347,7 @@ app.delete('/api/events/:id', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/admin/users', requireAuth, async (req, res) => {
-  try {
-    if (!req.user.isAdmin) return res.status(403).json({ error: 'Not authorized' });
-    const { users, bookings } = getCollections();
-
-    const allUsers = await users.find({}).toArray();
-
-    // Attach booking counts to each user
-    const usersWithStats = await Promise.all(allUsers.map(async (u) => {
-      const count = await bookings.countDocuments({ user_id: u.id });
-      return {
-        ...toPublicUser(u),
-        bookingCount: count,
-        created_at: u.created_at
-      };
-    }));
-
-    return res.json(usersWithStats);
-  } catch (error) {
-    console.error('Get admin users error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 const SUPER_ADMIN_USERNAME = 'sosokereselidze0';
-
-app.patch('/api/admin/users/:id/role', requireAuth, async (req, res) => {
-  try {
-    if (req.user.username !== SUPER_ADMIN_USERNAME) {
-      return res.status(403).json({ error: 'Only the Super Admin can change user roles' });
-    }
-    const { users } = getCollections();
-    const { id } = req.params;
-    const { isAdmin } = req.body;
-
-    if (typeof isAdmin !== 'boolean') {
-      return res.status(400).json({ error: 'isAdmin must be a boolean' });
-    }
-
-    const result = await users.findOneAndUpdate(
-      { id },
-      { $set: { isAdmin } },
-      { returnDocument: 'after' }
-    );
-
-    if (!result) return res.status(404).json({ error: 'User not found' });
-    return res.json(toPublicUser(result));
-  } catch (error) {
-    console.error('Update user role error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 app.delete('/api/admin/users/:id', requireAuth, async (req, res) => {
   try {
@@ -547,9 +496,7 @@ app.get('/api/admin/bookings', requireAuth, async (req, res) => {
 
 app.put('/api/admin/users/:id/role', requireAuth, async (req, res) => {
   try {
-    console.log('Role update requester:', req.user.username, 'Expected: sosokereselidze0');
-    // strict check for super admin
-    if (req.user.username !== 'sosokereselidze0') {
+    if (req.user.username !== SUPER_ADMIN_USERNAME) {
       return res.status(403).json({ error: 'Only the Super Admin can change roles' });
     }
 
@@ -676,7 +623,8 @@ app.post('/api/admin/upload', requireAuth, (req, res, next) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
     // Return the public URL
-    const url = `http://localhost:3001/uploads/${req.file.filename}`;
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const url = `${baseUrl}/uploads/${req.file.filename}`;
     res.json({ url });
   } catch (error) {
     console.error('Upload error:', error);
