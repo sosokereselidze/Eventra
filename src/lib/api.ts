@@ -1,3 +1,5 @@
+const TOKEN_KEY = 'eventflow_token';
+
 export function getApiUrl(path: string): string {
   const envUrl = import.meta.env.VITE_API_URL;
   
