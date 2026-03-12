@@ -100,11 +100,20 @@ function toPublicUser(u) {
   return { id: u.id, email: u.email, username: u.username, name: u.name, isAdmin: !!u.isAdmin };
 }
 
-// Health check
-app.get('/api/health', (req, res) => res.json({ status: 'ok', environment: process.env.NODE_ENV }));
-app.get('/health', (req, res) => res.json({ status: 'ok', environment: process.env.NODE_ENV }));
+// Health check with DB verification
+app.get('/api/health', async (req, res) => {
+  try {
+    const { events } = getCollections();
+    const count = await events.countDocuments();
+    res.json({ status: 'ok', database: 'connected', events_count: count, env: process.env.NODE_ENV });
+  } catch (err) {
+    res.json({ status: 'partial', database: 'error', error: err.message });
+  }
+});
+app.get('/health', (req, res) => res.json({ status: 'ok', origin: 'root' }));
 
-app.post('/api/auth/google', async (req, res) => {
+// Auth patterns...
+app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
   try {
     const { token } = req.body;
     if (!token) {
@@ -155,7 +164,7 @@ app.post('/api/auth/google', async (req, res) => {
   }
 });
 
-app.post('/api/auth/signup', async (req, res) => {
+app.post(['/api/auth/signup', '/auth/signup'], async (req, res) => {
   try {
     const { users } = getCollections();
     const { email, username, password, name } = req.body || {};
@@ -195,7 +204,7 @@ app.post('/api/auth/signup', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post(['/api/auth/login', '/auth/login'], async (req, res) => {
   try {
     const { users } = getCollections();
     const { identifier, password } = req.body || {}; // 'identifier' can be email or username
@@ -222,7 +231,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-app.get('/api/auth/me', async (req, res) => {
+app.get(['/api/auth/me', '/auth/me'], async (req, res) => {
   try {
     const { users } = getCollections();
     const auth = req.headers.authorization;
@@ -252,7 +261,7 @@ app.get('/api/auth/verify-admin', requireAuth, (req, res) => {
   return res.json({ ok: true });
 });
 
-app.get('/api/events', async (_req, res) => {
+app.get(['/api/events', '/events'], async (_req, res) => {
   try {
     const { events } = getCollections();
     const list = await events.find({}).sort({ date: 1 }).toArray();
@@ -263,7 +272,7 @@ app.get('/api/events', async (_req, res) => {
   }
 });
 
-app.get('/api/events/featured', async (_req, res) => {
+app.get(['/api/events/featured', '/events/featured'], async (_req, res) => {
   try {
     const { events } = getCollections();
     const list = await events.find({ featured: true }).sort({ date: 1 }).limit(5).toArray();
@@ -274,7 +283,7 @@ app.get('/api/events/featured', async (_req, res) => {
   }
 });
 
-app.get('/api/events/:id', async (req, res) => {
+app.get(['/api/events/:id', '/events/:id'], async (req, res) => {
   try {
     const { events } = getCollections();
     const event = await events.findOne({ id: req.params.id });
