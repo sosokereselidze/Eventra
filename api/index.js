@@ -100,6 +100,10 @@ function toPublicUser(u) {
   return { id: u.id, email: u.email, username: u.username, name: u.name, isAdmin: !!u.isAdmin };
 }
 
+// Health check
+app.get('/api/health', (req, res) => res.json({ status: 'ok', environment: process.env.NODE_ENV }));
+app.get('/health', (req, res) => res.json({ status: 'ok', environment: process.env.NODE_ENV }));
+
 app.post('/api/auth/google', async (req, res) => {
   try {
     const { token } = req.body;
