@@ -130,8 +130,11 @@ export default function Admin() {
         .catch(() => toast({ title: 'Error loading bookings', variant: 'destructive' }));
     }
     if (activeTab === 'events' && events.length === 0) {
-      fetchApi<Event[]>('/api/events')
-        .then((data) => setEvents(data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())))
+      fetchApi<any>('/api/events?limit=100')
+        .then((data) => {
+          const eventList = Array.isArray(data) ? data : data.events;
+          setEvents(eventList.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+        })
         .catch(() => toast({ title: 'Error loading events', variant: 'destructive' }));
     }
   }, [activeTab, users.length, bookings.length, events.length, toast]);
@@ -221,8 +224,9 @@ export default function Admin() {
 
       setIsDialogOpen(false);
       // Reload events
-      const data = await fetchApi<Event[]>('/api/events');
-      setEvents(data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+      const data = await fetchApi<any>('/api/events?limit=100');
+      const eventList = Array.isArray(data) ? data : data.events;
+      setEvents(eventList.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
     } catch (error) {
       toast({ title: 'Failed to save event', variant: 'destructive' });
     }
