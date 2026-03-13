@@ -28,17 +28,29 @@ export interface Booking {
   events?: Event;
 }
 
-export function useEvents(limit?: number) {
+export interface PaginatedEvents {
+  events: Event[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export function useEvents(page: number = 1, limit: number = 20) {
   return useQuery({
-    queryKey: ['events', limit],
-    queryFn: () => fetchApi<Event[]>(`/api/events${limit ? `?limit=${limit}` : ''}`),
+    queryKey: ['events', page, limit],
+    queryFn: () => fetchApi<PaginatedEvents>(`/api/events?page=${page}&limit=${limit}`),
   });
 }
 
 export function useFeaturedEvents() {
   return useQuery({
     queryKey: ['events', 'featured'],
-    queryFn: () => fetchApi<Event[]>('/api/events/featured'),
+    queryFn: async () => {
+      // For backward compatibility or if featured endpoint still returns raw array
+      const res = await fetchApi<Event[] | { events: Event[] }>('/api/events/featured');
+      return Array.isArray(res) ? res : res.events;
+    },
   });
 }
 

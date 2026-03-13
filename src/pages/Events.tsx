@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Filter, Calendar, SlidersHorizontal, ArrowRight } from 'lucide-react';
+import { Search, Filter, Calendar, SlidersHorizontal, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { EventCard } from '@/components/events/EventCard';
@@ -20,8 +20,9 @@ import {
 const CATEGORIES = ['All', 'Music', 'Technology', 'Food & Drink', 'Sports', 'Art', 'Business', 'Wellness', 'Entertainment'];
 
 export default function Events() {
-  const [limit, setLimit] = useState(20);
-  const { data: events, isLoading } = useEvents(limit);
+  const [page, setPage] = useState(1);
+  const { data: paginatedData, isLoading } = useEvents(page, 20);
+  const events = paginatedData?.events || [];
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [category, setCategory] = useState('All');
@@ -78,7 +79,9 @@ export default function Events() {
     return filtered;
   }, [events, search, category, sortBy]);
 
-  const hasMore = events?.length === limit;
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [page]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -141,12 +144,12 @@ export default function Events() {
           <div className="flex items-center gap-2 mb-6">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">
-              {isLoading ? 'Loading...' : `${filteredEvents.length} events found`}
+              {isLoading && !events.length ? 'Loading...' : `${paginatedData?.total || 0} events found`}
             </span>
           </div>
 
           {/* Events Grid */}
-          {isLoading && limit === 20 ? (
+          {isLoading && !events.length ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="space-y-4">
@@ -191,16 +194,33 @@ export default function Events() {
                 ))}
               </div>
 
-              {hasMore && (
-                <div className="mt-12 text-center">
-                  <Button 
-                    size="lg" 
-                    onClick={() => setLimit(prev => prev + 20)}
-                    disabled={isLoading}
-                    className="gap-2 px-10"
+              {paginatedData && paginatedData.totalPages > 1 && (
+                <div className="mt-12 flex items-center justify-center gap-6">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1 || isLoading}
+                    className="h-10 w-10 rounded-full hover:bg-primary hover:text-primary-foreground transition-all duration-300"
                   >
-                    {isLoading ? 'Loading...' : 'Show More Events'}
-                    <ArrowRight className="h-4 w-4" />
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  
+                  <div className="flex flex-col items-center">
+                    <span className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Page</span>
+                    <span className="text-lg font-bold">
+                      {page} <span className="text-muted-foreground font-normal mx-1">/</span> {paginatedData.totalPages}
+                    </span>
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setPage(p => Math.min(paginatedData.totalPages, p + 1))}
+                    disabled={page === paginatedData.totalPages || isLoading}
+                    className="h-10 w-10 rounded-full hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                  >
+                    <ChevronRight className="h-5 w-5" />
                   </Button>
                 </div>
               )}

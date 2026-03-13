@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, Users, Zap, Shield } from 'lucide-react';
+import { ArrowRight, Sparkles, Users, Zap, Shield, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -11,13 +11,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/lib/auth';
 
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Index() {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [page, setPage] = useState(1);
   const { data: featuredEvents, isLoading: loadingFeatured } = useFeaturedEvents();
-  const { data: allEvents, isLoading: loadingEvents } = useEvents(20);
+  const { data: allEventsData, isLoading: loadingEvents } = useEvents(page, 20);
 
   useEffect(() => {
     if (user && isAdmin) {
@@ -25,7 +26,7 @@ export default function Index() {
     }
   }, [user, isAdmin, navigate]);
 
-  const upcomingEvents = allEvents || [];
+  const upcomingEvents = allEventsData?.events || [];
   const heroEvent = featuredEvents?.[0];
 
   return (
@@ -181,13 +182,46 @@ export default function Index() {
             </div>
           )}
 
+          {allEventsData && allEventsData.totalPages > 1 && (
+            <div className="mt-12 flex items-center justify-center gap-6">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1 || loadingEvents}
+                className="h-10 w-10 rounded-full hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-lg"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              
+              <div className="flex flex-col items-center">
+                <span className="text-xs text-muted-foreground uppercase tracking-tighter font-bold opacity-70">Page</span>
+                <span className="text-xl font-black">
+                  {page} <span className="text-muted-foreground font-light mx-1">/</span> {allEventsData.totalPages}
+                </span>
+              </div>
+              
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setPage(p => Math.min(allEventsData.totalPages, p + 1))}
+                disabled={page === allEventsData.totalPages || loadingEvents}
+                className="h-10 w-10 rounded-full hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-lg"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </div>
+          )}
+
           <div className="mt-10 text-center sm:hidden">
-            <Button variant="outline" asChild className="gap-2">
-              <Link to="/events">
-                View All Events
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+            {!allEventsData || allEventsData.totalPages <= 1 ? (
+              <Button variant="outline" asChild className="gap-2">
+                <Link to="/events">
+                  View All Events
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            ) : null}
           </div>
         </div>
       </section>

@@ -264,15 +264,24 @@ app.get('/api/auth/verify-admin', requireAuth, (req, res) => {
 app.get(['/api/events', '/events'], async (req, res) => {
   try {
     const { events } = getCollections();
-    const limit = parseInt(req.query.limit) || 0;
-    let query = events.find({}).sort({ date: 1 });
-    
-    if (limit > 0) {
-      query = query.limit(limit);
-    }
-    
-    const list = await query.toArray();
-    return res.json(list);
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const skip = (page - 1) * limit;
+
+    const totalCount = await events.countDocuments();
+    const items = await events.find({})
+      .sort({ date: 1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+
+    return res.json({
+      events: items,
+      total: totalCount,
+      page,
+      limit,
+      totalPages: Math.ceil(totalCount / limit)
+    });
   } catch (error) {
     console.error('Get events error:', error);
     return res.status(500).json({ error: 'Internal server error' });

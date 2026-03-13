@@ -23,18 +23,18 @@ export function Navbar() {
   const isAdminPage = location.pathname === '/admin';
 
   const [searchQuery, setSearchQuery] = useState('');
-  const { data: events } = useEvents();
+  const { data: paginatedData } = useEvents(1, 100);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const suggestions = useMemo(() => {
-    if (!searchQuery.trim() || !events) return [];
-    return events
+    if (!searchQuery.trim() || !paginatedData?.events) return [];
+    return paginatedData.events
       .filter(event =>
         event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         event.location.toLowerCase().includes(searchQuery.toLowerCase())
       )
       .slice(0, 3);
-  }, [searchQuery, events]);
+  }, [searchQuery, paginatedData]);
 
   const handleSignOut = async () => {
     await signOut();
