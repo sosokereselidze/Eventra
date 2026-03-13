@@ -13,11 +13,11 @@ export async function initializeDatabase() {
 
   // Ensure the super-admin account always exists
   const admin = {
-    id: 'sosok-admin-uuid',
-    email: 'sosokereselidze0@example.com',
-    username: 'sosokereselidze0',
-    password: process.env.ADMIN_PASSWORD || 'admin0',
-    name: 'Sosok',
+    id: 'super-admin-uuid',
+    email: process.env.ADMIN_EMAIL || 'admin@example.com',
+    username: process.env.ADMIN_USERNAME || 'admin',
+    password: process.env.ADMIN_PASSWORD || 'admin123',
+    name: process.env.ADMIN_NAME || 'Super Admin',
     isAdmin: true,
   };
 

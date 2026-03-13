@@ -382,7 +382,7 @@ app.delete('/api/events/:id', requireAuth, async (req, res) => {
   }
 });
 
-const SUPER_ADMIN_USERNAME = 'sosokereselidze0';
+const SUPER_ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 
 app.delete('/api/admin/users/:id', requireAuth, async (req, res) => {
   try {

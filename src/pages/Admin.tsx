@@ -294,7 +294,7 @@ export default function Admin() {
     setIsDialogOpen(true);
   };
 
-  const isSuperAdmin = user?.username === 'sosokereselidze0';
+  const isSuperAdmin = user?.username === (import.meta.env.VITE_ADMIN_USERNAME || 'admin');
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
   if (!analytics) {
@@ -727,7 +727,7 @@ export default function Admin() {
                             </td>
                             <td className="px-6 py-4 text-muted-foreground">{u.username || 'No username'}</td>
                             <td className="px-6 py-4">
-                              {u.username === 'sosokereselidze0' ? (
+                              {u.username === (import.meta.env.VITE_ADMIN_USERNAME || 'admin') ? (
                                 <span className="px-2 py-1 rounded bg-amber-500/20 text-amber-400 text-xs font-bold border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.2)]">Super Admin</span>
                               ) : u.isAdmin ? (
                                 <span className="px-2 py-1 rounded bg-purple-500/20 text-purple-400 text-xs font-bold">Admin</span>
@@ -738,7 +738,7 @@ export default function Admin() {
                             <td className="px-6 py-4 text-muted-foreground">{u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}</td>
                             {isSuperAdmin && (
                               <td className="px-6 py-4 text-right">
-                                {u.username !== 'sosokereselidze0' && (
+                                {u.username !== (import.meta.env.VITE_ADMIN_USERNAME || 'admin') && (
                                   u.isAdmin ? (
                                     <Button
                                       size="sm"

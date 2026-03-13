@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<{ user: AuthUser } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const isSuperAdmin = user?.username === 'sosokereselidze0';
+  const isSuperAdmin = user?.username === (import.meta.env.VITE_ADMIN_USERNAME || 'admin');
 
   const checkAdminRole = async () => {
     try {
