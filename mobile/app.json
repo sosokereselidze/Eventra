@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Eventra",
+    "slug": "eventra",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#EA580C"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.eventra.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#EA580C"
+      },
+      "package": "com.eventra.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "scheme": "eventra",
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
