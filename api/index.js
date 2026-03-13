@@ -264,7 +264,7 @@ app.get('/api/auth/verify-admin', requireAuth, (req, res) => {
 app.get(['/api/events', '/events'], async (req, res) => {
   try {
     const { events } = getCollections();
-    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const limit = Math.min(parseInt(req.query.limit) || 18, 100);
     const page = Math.max(parseInt(req.query.page) || 1, 1);
     const skip = (page - 1) * limit;
 
