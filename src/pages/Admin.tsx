@@ -132,7 +132,8 @@ export default function Admin() {
       setLoading(true);
       fetchApi<any>(`/api/admin/users?page=${usersPage}&limit=20`)
         .then(data => {
-          setUsers(Array.isArray(data?.users) ? data.users : []);
+          const items = data?.users || (Array.isArray(data) ? data : []);
+          setUsers(items);
           setUsersTotalPages(data?.totalPages || 1);
         })
         .catch(() => toast({ title: 'Error loading users', variant: 'destructive' }))
@@ -142,7 +143,8 @@ export default function Admin() {
       setLoading(true);
       fetchApi<any>(`/api/admin/bookings?page=${bookingsPage}&limit=20`)
         .then(data => {
-          setBookings(Array.isArray(data?.bookings) ? data.bookings : []);
+          const items = data?.bookings || (Array.isArray(data) ? data : []);
+          setBookings(items);
           setBookingsTotalPages(data?.totalPages || 1);
         })
         .catch(() => toast({ title: 'Error loading bookings', variant: 'destructive' }))
@@ -152,7 +154,8 @@ export default function Admin() {
       setLoading(true);
       fetchApi<any>(`/api/events?page=${eventsPage}&limit=20`)
         .then((data) => {
-          setEvents(Array.isArray(data?.events) ? data.events : []);
+          const items = data?.events || (Array.isArray(data) ? data : []);
+          setEvents(items);
           setEventsTotalPages(data?.totalPages || 1);
         })
         .catch(() => toast({ title: 'Error loading events', variant: 'destructive' }))
@@ -378,7 +381,7 @@ export default function Admin() {
                     </thead>
                     <tbody className="divide-y divide-border/30">
                       {events?.map((e) => (
-                        <tr key={e.id} className="hover:bg-secondary/10 transition-colors">
+                        <tr key={e.id || (e as any)._id} className="hover:bg-secondary/10 transition-colors">
                           <td className="px-6 py-4">
                             <div className="h-12 w-16 rounded overflow-hidden bg-muted relative">
                               {e.image_url ? (
@@ -710,19 +713,19 @@ export default function Admin() {
                       </thead>
                       <tbody className="divide-y divide-border/30">
                         {users?.map((u) => (
-                          <tr key={u.id} className="hover:bg-secondary/10 transition-colors">
+                          <tr key={u.id || (u as any)._id} className="hover:bg-secondary/10 transition-colors">
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                                  {u.name.charAt(0).toUpperCase()}
+                                  {(u.name || u.email || 'U').charAt(0).toUpperCase()}
                                 </div>
                                 <div>
-                                  <div className="font-medium text-foreground">{u.name}</div>
-                                  <div className="text-muted-foreground text-xs">{u.email}</div>
+                                  <div className="font-medium text-foreground">{u.name || 'Unknown User'}</div>
+                                  <div className="text-muted-foreground text-xs">{u.email || 'No email provided'}</div>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-muted-foreground">{u.username}</td>
+                            <td className="px-6 py-4 text-muted-foreground">{u.username || 'No username'}</td>
                             <td className="px-6 py-4">
                               {u.username === 'sosokereselidze0' ? (
                                 <span className="px-2 py-1 rounded bg-amber-500/20 text-amber-400 text-xs font-bold border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.2)]">Super Admin</span>
@@ -732,7 +735,7 @@ export default function Admin() {
                                 <span className="px-2 py-1 rounded bg-blue-500/10 text-blue-400 text-xs">User</span>
                               )}
                             </td>
-                            <td className="px-6 py-4 text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</td>
+                            <td className="px-6 py-4 text-muted-foreground">{u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}</td>
                             {isSuperAdmin && (
                               <td className="px-6 py-4 text-right">
                                 {u.username !== 'sosokereselidze0' && (
@@ -816,18 +819,24 @@ export default function Admin() {
                       </thead>
                       <tbody className="divide-y divide-border/30">
                         {bookings?.map((b) => (
-                          <tr key={b.id} className="hover:bg-secondary/10 transition-colors">
-                            <td className="px-6 py-4 font-medium text-foreground">{b.event.title}</td>
+                          <tr key={b.id || (b as any)._id} className="hover:bg-secondary/10 transition-colors">
+                            <td className="px-6 py-4 font-medium text-foreground">{b.event?.title || 'Unknown Event'}</td>
                             <td className="px-6 py-4">
                               <div className="flex flex-col">
-                                <span className="text-foreground">{b.user.name}</span>
-                                <span className="text-xs text-muted-foreground">{b.user.email}</span>
+                                <span className="text-foreground">{b.user?.name || 'Unknown User'}</span>
+                                <span className="text-xs text-muted-foreground">{b.user?.email || 'N/A'}</span>
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-muted-foreground">{new Date(b.created_at).toLocaleDateString()} {new Date(b.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                            <td className="px-6 py-4 text-muted-foreground">
+                              {b.created_at ? (
+                                <>
+                                  {new Date(b.created_at).toLocaleDateString()} {new Date(b.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </>
+                              ) : 'N/A'}
+                            </td>
                             <td className="px-6 py-4 text-foreground">{b.quantity}</td>
                             <td className="px-6 py-4 text-right font-medium text-emerald-400">
-                              ${(b.event.price * b.quantity).toLocaleString()}
+                              ${((b.event?.price || 0) * (b.quantity || 0)).toLocaleString()}
                             </td>
                           </tr>
                         ))}

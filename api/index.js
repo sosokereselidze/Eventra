@@ -506,7 +506,7 @@ app.get('/api/admin/users', requireAuth, async (req, res) => {
       .toArray();
 
     return res.json({
-      users: items,
+      users: items.map(u => ({ ...u, id: u.id || u._id.toString() })),
       total: totalCount,
       page,
       limit,
@@ -546,7 +546,7 @@ app.get('/api/admin/bookings', requireAuth, async (req, res) => {
     }));
 
     return res.json({
-      bookings: enriched,
+      bookings: enriched.map(b => ({ ...b, id: b.id || b._id.toString() })),
       total: totalCount,
       page,
       limit,
