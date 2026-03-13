@@ -21,7 +21,7 @@ const CATEGORIES = ['All', 'Music', 'Technology', 'Food & Drink', 'Sports', 'Art
 
 export default function Events() {
   const [page, setPage] = useState(1);
-  const { data: paginatedData, isLoading } = useEvents(page, 20);
+  const { data: paginatedData, isLoading } = useEvents(page, 18);
   const events = paginatedData?.events || [];
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('q') || '');
