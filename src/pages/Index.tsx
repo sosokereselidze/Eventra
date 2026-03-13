@@ -18,7 +18,7 @@ export default function Index() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const { data: featuredEvents, isLoading: loadingFeatured } = useFeaturedEvents();
-  const { data: paginatedData, isLoading } = useEvents(page, 18);
+  const { data: allEventsData, isLoading: loadingEvents } = useEvents(page, 18);
 
   useEffect(() => {
     if (user && isAdmin) {
