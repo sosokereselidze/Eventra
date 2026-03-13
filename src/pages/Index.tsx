@@ -17,7 +17,7 @@ export default function Index() {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { data: featuredEvents, isLoading: loadingFeatured } = useFeaturedEvents();
-  const { data: allEvents, isLoading: loadingEvents } = useEvents();
+  const { data: allEvents, isLoading: loadingEvents } = useEvents(20);
 
   useEffect(() => {
     if (user && isAdmin) {
@@ -25,7 +25,7 @@ export default function Index() {
     }
   }, [user, isAdmin, navigate]);
 
-  const upcomingEvents = allEvents?.slice(0, 6) || [];
+  const upcomingEvents = allEvents || [];
   const heroEvent = featuredEvents?.[0];
 
   return (

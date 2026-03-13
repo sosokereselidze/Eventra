@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Filter, Calendar, SlidersHorizontal } from 'lucide-react';
+import { Search, Filter, Calendar, SlidersHorizontal, ArrowRight } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { EventCard } from '@/components/events/EventCard';
@@ -20,7 +20,8 @@ import {
 const CATEGORIES = ['All', 'Music', 'Technology', 'Food & Drink', 'Sports', 'Art', 'Business', 'Wellness', 'Entertainment'];
 
 export default function Events() {
-  const { data: events, isLoading } = useEvents();
+  const [limit, setLimit] = useState(20);
+  const { data: events, isLoading } = useEvents(limit);
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [category, setCategory] = useState('All');
@@ -50,7 +51,7 @@ export default function Events() {
     let filtered = events.filter((event) => {
       const matchesSearch =
         event.title.toLowerCase().includes(search.toLowerCase()) ||
-        event.description?.toLowerCase().includes(search.toLowerCase()) ||
+        (event.description || '').toLowerCase().includes(search.toLowerCase()) ||
         event.location.toLowerCase().includes(search.toLowerCase());
 
       const matchesCategory = category === 'All' || event.category === category;
@@ -76,6 +77,8 @@ export default function Events() {
 
     return filtered;
   }, [events, search, category, sortBy]);
+
+  const hasMore = events?.length === limit;
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,9 +146,9 @@ export default function Events() {
           </div>
 
           {/* Events Grid */}
-          {isLoading ? (
+          {isLoading && limit === 20 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(9)].map((_, i) => (
+              {[...Array(6)].map((_, i) => (
                 <div key={i} className="space-y-4">
                   <Skeleton className="aspect-[16/10] rounded-xl" />
                   <Skeleton className="h-6 w-3/4" />
@@ -154,7 +157,7 @@ export default function Events() {
                 </div>
               ))}
             </div>
-          ) : filteredEvents.length === 0 ? (
+          ) : filteredEvents.length === 0 && !isLoading ? (
             <div className="text-center py-20">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
                 <Filter className="h-8 w-8 text-muted-foreground" />
@@ -168,24 +171,40 @@ export default function Events() {
               </Button>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  id={event.id}
-                  title={event.title}
-                  description={event.description}
-                  date={event.date}
-                  location={event.location}
-                  imageUrl={event.image_url}
-                  ticketsAvailable={event.tickets_available}
-                  ticketsBooked={event.tickets_booked}
-                  price={Number(event.price)}
-                  category={event.category}
-                  featured={event.featured}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredEvents.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    id={event.id}
+                    title={event.title}
+                    description={event.description}
+                    date={event.date}
+                    location={event.location}
+                    imageUrl={event.image_url}
+                    ticketsAvailable={event.tickets_available}
+                    ticketsBooked={event.tickets_booked}
+                    price={Number(event.price)}
+                    category={event.category}
+                    featured={event.featured}
+                  />
+                ))}
+              </div>
+
+              {hasMore && (
+                <div className="mt-12 text-center">
+                  <Button 
+                    size="lg" 
+                    onClick={() => setLimit(prev => prev + 20)}
+                    disabled={isLoading}
+                    className="gap-2 px-10"
+                  >
+                    {isLoading ? 'Loading...' : 'Show More Events'}
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>

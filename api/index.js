@@ -261,10 +261,17 @@ app.get('/api/auth/verify-admin', requireAuth, (req, res) => {
   return res.json({ ok: true });
 });
 
-app.get(['/api/events', '/events'], async (_req, res) => {
+app.get(['/api/events', '/events'], async (req, res) => {
   try {
     const { events } = getCollections();
-    const list = await events.find({}).sort({ date: 1 }).toArray();
+    const limit = parseInt(req.query.limit) || 0;
+    let query = events.find({}).sort({ date: 1 });
+    
+    if (limit > 0) {
+      query = query.limit(limit);
+    }
+    
+    const list = await query.toArray();
     return res.json(list);
   } catch (error) {
     console.error('Get events error:', error);

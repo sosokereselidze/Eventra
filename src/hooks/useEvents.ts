@@ -28,10 +28,10 @@ export interface Booking {
   events?: Event;
 }
 
-export function useEvents() {
+export function useEvents(limit?: number) {
   return useQuery({
-    queryKey: ['events'],
-    queryFn: () => fetchApi<Event[]>('/api/events'),
+    queryKey: ['events', limit],
+    queryFn: () => fetchApi<Event[]>(`/api/events${limit ? `?limit=${limit}` : ''}`),
   });
 }
 
