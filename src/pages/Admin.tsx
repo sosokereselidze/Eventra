@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { fetchApi, getApiUrl } from '@/lib/api';
-import { Users, Calendar, TrendingUp, DollarSign, Activity, BarChart3, PieChart as PieChartIcon, ArrowUpRight, LayoutDashboard, Ticket, Plus, Pencil, Trash, MapPin, Image as ImageIcon } from 'lucide-react';
+import { Users, Calendar, TrendingUp, DollarSign, Activity, BarChart3, PieChart as PieChartIcon, ArrowUpRight, LayoutDashboard, Ticket, Plus, Pencil, Trash, MapPin, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { useAuth } from '@/lib/auth';
 import { Input } from "@/components/ui/input";
@@ -98,6 +98,16 @@ export default function Admin() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
 
+  const [usersPage, setUsersPage] = useState(1);
+  const [bookingsPage, setBookingsPage] = useState(1);
+  const [eventsPage, setEventsPage] = useState(1);
+
+  const [usersTotalPages, setUsersTotalPages] = useState(1);
+  const [bookingsTotalPages, setBookingsTotalPages] = useState(1);
+  const [eventsTotalPages, setEventsTotalPages] = useState(1);
+
+  const [loading, setLoading] = useState(false);
+
   // Event Dialog State
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isaccessing, setIsAccessing] = useState(false);
@@ -119,25 +129,37 @@ export default function Admin() {
 
   // Lazy load tab data
   useEffect(() => {
-    if (activeTab === 'users' && users.length === 0) {
-      fetchApi<User[]>('/api/admin/users')
-        .then(setUsers)
-        .catch(() => toast({ title: 'Error loading users', variant: 'destructive' }));
-    }
-    if (activeTab === 'bookings' && bookings.length === 0) {
-      fetchApi<Booking[]>('/api/admin/bookings')
-        .then(setBookings)
-        .catch(() => toast({ title: 'Error loading bookings', variant: 'destructive' }));
-    }
-    if (activeTab === 'events' && events.length === 0) {
-      fetchApi<any>('/api/events?limit=100')
-        .then((data) => {
-          const eventList = Array.isArray(data) ? data : data.events;
-          setEvents(eventList.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+    if (activeTab === 'users') {
+      setLoading(true);
+      fetchApi<any>(`/api/admin/users?page=${usersPage}&limit=20`)
+        .then(data => {
+          setUsers(data.users);
+          setUsersTotalPages(data.totalPages);
         })
-        .catch(() => toast({ title: 'Error loading events', variant: 'destructive' }));
+        .catch(() => toast({ title: 'Error loading users', variant: 'destructive' }))
+        .finally(() => setLoading(false));
     }
-  }, [activeTab, users.length, bookings.length, events.length, toast]);
+    if (activeTab === 'bookings') {
+      setLoading(true);
+      fetchApi<any>(`/api/admin/bookings?page=${bookingsPage}&limit=20`)
+        .then(data => {
+          setBookings(data.bookings);
+          setBookingsTotalPages(data.totalPages);
+        })
+        .catch(() => toast({ title: 'Error loading bookings', variant: 'destructive' }))
+        .finally(() => setLoading(false));
+    }
+    if (activeTab === 'events') {
+      setLoading(true);
+      fetchApi<any>(`/api/events?page=${eventsPage}&limit=20`)
+        .then((data) => {
+          setEvents(data.events);
+          setEventsTotalPages(data.totalPages);
+        })
+        .catch(() => toast({ title: 'Error loading events', variant: 'destructive' }))
+        .finally(() => setLoading(false));
+    }
+  }, [activeTab, usersPage, bookingsPage, eventsPage, toast]);
 
   const handleRoleUpdate = async (userId: string, newStatus: boolean) => {
     try {
@@ -148,8 +170,9 @@ export default function Admin() {
 
       toast({ title: `User role updated`, description: `User is now ${newStatus ? 'an Admin' : 'a regular User'}` });
 
-      const updatedUsers = await fetchApi<User[]>('/api/admin/users');
-      setUsers(updatedUsers);
+      const data = await fetchApi<any>(`/api/admin/users?page=${usersPage}&limit=20`);
+      setUsers(data.users);
+      setUsersTotalPages(data.totalPages);
     } catch (error) {
       toast({ title: 'Failed to update role', description: 'Only Super Admin can do this', variant: 'destructive' });
     }
@@ -224,9 +247,9 @@ export default function Admin() {
 
       setIsDialogOpen(false);
       // Reload events
-      const data = await fetchApi<any>('/api/events?limit=100');
-      const eventList = Array.isArray(data) ? data : data.events;
-      setEvents(eventList.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+      const data = await fetchApi<any>(`/api/events?page=${eventsPage}&limit=20`);
+      setEvents(data.events);
+      setEventsTotalPages(data.totalPages);
     } catch (error) {
       toast({ title: 'Failed to save event', variant: 'destructive' });
     }
@@ -399,6 +422,30 @@ export default function Admin() {
                     </tbody>
                   </table>
                 </div>
+
+                {eventsTotalPages > 1 && (
+                  <div className="mt-6 flex items-center justify-center gap-4">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setEventsPage(p => Math.max(1, p - 1))}
+                      disabled={eventsPage === 1 || loading}
+                      className="h-8 w-8 rounded-full"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm font-medium">Page {eventsPage} of {eventsTotalPages}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setEventsPage(p => Math.min(eventsTotalPages, p + 1))}
+                      disabled={eventsPage === eventsTotalPages || loading}
+                      className="h-8 w-8 rounded-full"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -714,6 +761,30 @@ export default function Admin() {
                       </tbody>
                     </table>
                   </div>
+
+                  {usersTotalPages > 1 && (
+                    <div className="mt-6 flex items-center justify-center gap-4">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setUsersPage(p => Math.max(1, p - 1))}
+                        disabled={usersPage === 1 || loading}
+                        className="h-8 w-8 rounded-full"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm font-medium">Page {usersPage} of {usersTotalPages}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setUsersPage(p => Math.min(usersTotalPages, p + 1))}
+                        disabled={usersPage === usersTotalPages || loading}
+                        className="h-8 w-8 rounded-full"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -761,6 +832,30 @@ export default function Admin() {
                       </tbody>
                     </table>
                   </div>
+
+                  {bookingsTotalPages > 1 && (
+                    <div className="mt-6 flex items-center justify-center gap-4">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setBookingsPage(p => Math.max(1, p - 1))}
+                        disabled={bookingsPage === 1 || loading}
+                        className="h-8 w-8 rounded-full"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm font-medium">Page {bookingsPage} of {bookingsTotalPages}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setBookingsPage(p => Math.min(bookingsTotalPages, p + 1))}
+                        disabled={bookingsPage === bookingsTotalPages || loading}
+                        className="h-8 w-8 rounded-full"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

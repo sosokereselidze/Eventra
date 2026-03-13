@@ -493,8 +493,25 @@ app.get('/api/admin/users', requireAuth, async (req, res) => {
   try {
     if (!req.user.isAdmin) return res.status(403).json({ error: 'Not authorized' });
     const { users } = getCollections();
-    const allUsers = await users.find({}).project({ passwordHash: 0 }).toArray();
-    return res.json(allUsers);
+    
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const skip = (page - 1) * limit;
+
+    const totalCount = await users.countDocuments();
+    const items = await users.find({})
+      .project({ passwordHash: 0 })
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+
+    return res.json({
+      users: items,
+      total: totalCount,
+      page,
+      limit,
+      totalPages: Math.ceil(totalCount / limit)
+    });
   } catch (error) {
     console.error('Get admin users error:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -506,10 +523,19 @@ app.get('/api/admin/bookings', requireAuth, async (req, res) => {
     if (!req.user.isAdmin) return res.status(403).json({ error: 'Not authorized' });
     const { bookings, events, users } = getCollections();
 
-    const allBookings = await bookings.find({}).toArray();
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const skip = (page - 1) * limit;
+
+    const totalCount = await bookings.countDocuments();
+    const items = await bookings.find({})
+      .sort({ created_at: -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray();
 
     // Populate details
-    const enriched = await Promise.all(allBookings.map(async (b) => {
+    const enriched = await Promise.all(items.map(async (b) => {
       const user = await users.findOne({ id: b.user_id }, { projection: { passwordHash: 0 } });
       const event = await events.findOne({ id: b.event_id });
       return {
@@ -519,10 +545,13 @@ app.get('/api/admin/bookings', requireAuth, async (req, res) => {
       };
     }));
 
-    // Sort by newest first
-    enriched.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    return res.json(enriched);
+    return res.json({
+      bookings: enriched,
+      total: totalCount,
+      page,
+      limit,
+      totalPages: Math.ceil(totalCount / limit)
+    });
   } catch (error) {
     console.error('Get admin bookings error:', error);
     return res.status(500).json({ error: 'Internal server error' });
