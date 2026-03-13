@@ -126,15 +126,14 @@ export default function Admin() {
     };
     loadDashboard();
   }, [toast]);
-
   // Lazy load tab data
   useEffect(() => {
     if (activeTab === 'users') {
       setLoading(true);
       fetchApi<any>(`/api/admin/users?page=${usersPage}&limit=20`)
         .then(data => {
-          setUsers(data.users);
-          setUsersTotalPages(data.totalPages);
+          setUsers(Array.isArray(data?.users) ? data.users : []);
+          setUsersTotalPages(data?.totalPages || 1);
         })
         .catch(() => toast({ title: 'Error loading users', variant: 'destructive' }))
         .finally(() => setLoading(false));
@@ -143,8 +142,8 @@ export default function Admin() {
       setLoading(true);
       fetchApi<any>(`/api/admin/bookings?page=${bookingsPage}&limit=20`)
         .then(data => {
-          setBookings(data.bookings);
-          setBookingsTotalPages(data.totalPages);
+          setBookings(Array.isArray(data?.bookings) ? data.bookings : []);
+          setBookingsTotalPages(data?.totalPages || 1);
         })
         .catch(() => toast({ title: 'Error loading bookings', variant: 'destructive' }))
         .finally(() => setLoading(false));
@@ -153,8 +152,8 @@ export default function Admin() {
       setLoading(true);
       fetchApi<any>(`/api/events?page=${eventsPage}&limit=20`)
         .then((data) => {
-          setEvents(data.events);
-          setEventsTotalPages(data.totalPages);
+          setEvents(Array.isArray(data?.events) ? data.events : []);
+          setEventsTotalPages(data?.totalPages || 1);
         })
         .catch(() => toast({ title: 'Error loading events', variant: 'destructive' }))
         .finally(() => setLoading(false));
@@ -171,8 +170,10 @@ export default function Admin() {
       toast({ title: `User role updated`, description: `User is now ${newStatus ? 'an Admin' : 'a regular User'}` });
 
       const data = await fetchApi<any>(`/api/admin/users?page=${usersPage}&limit=20`);
-      setUsers(data.users);
-      setUsersTotalPages(data.totalPages);
+      if (data && data.users) {
+        setUsers(data.users);
+        setUsersTotalPages(data.totalPages);
+      }
     } catch (error) {
       toast({ title: 'Failed to update role', description: 'Only Super Admin can do this', variant: 'destructive' });
     }
@@ -248,8 +249,10 @@ export default function Admin() {
       setIsDialogOpen(false);
       // Reload events
       const data = await fetchApi<any>(`/api/events?page=${eventsPage}&limit=20`);
-      setEvents(data.events);
-      setEventsTotalPages(data.totalPages);
+      if (data && data.events) {
+        setEvents(data.events);
+        setEventsTotalPages(data.totalPages);
+      }
     } catch (error) {
       toast({ title: 'Failed to save event', variant: 'destructive' });
     }
@@ -374,7 +377,7 @@ export default function Admin() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/30">
-                      {events.map((e) => (
+                      {events?.map((e) => (
                         <tr key={e.id} className="hover:bg-secondary/10 transition-colors">
                           <td className="px-6 py-4">
                             <div className="h-12 w-16 rounded overflow-hidden bg-muted relative">
@@ -630,8 +633,8 @@ export default function Admin() {
                     <div className="h-[350px] w-full relative">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
-                          <Pie data={analytics.categoryStats} cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={5} dataKey="value" stroke="none">
-                            {analytics.categoryStats.map((_, index) => (
+                          <Pie data={analytics.categoryStats || []} cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={5} dataKey="value" stroke="none">
+                            {analytics.categoryStats?.map((_, index) => (
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Pie>
@@ -644,10 +647,9 @@ export default function Admin() {
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 mt-4">
-                      {analytics.categoryStats.slice(0, 4).map((cat, i) => (
-                        <div key={i} className="flex items-center gap-2 text-sm">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                          <span className="text-muted-foreground truncate">{cat.name}</span>
+                      {analytics.categoryStats?.slice(0, 4).map((cat, i) => (
+                        <div key={i} className="flex flex-col p-2 rounded-lg bg-secondary/20 border border-white/5">
+                          <span className="text-xs font-medium text-foreground truncate">{cat.name}</span>
                         </div>
                       ))}
                     </div>
@@ -707,7 +709,7 @@ export default function Admin() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border/30">
-                        {users.map((u) => (
+                        {users?.map((u) => (
                           <tr key={u.id} className="hover:bg-secondary/10 transition-colors">
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
@@ -813,7 +815,7 @@ export default function Admin() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border/30">
-                        {bookings.map((b) => (
+                        {bookings?.map((b) => (
                           <tr key={b.id} className="hover:bg-secondary/10 transition-colors">
                             <td className="px-6 py-4 font-medium text-foreground">{b.event.title}</td>
                             <td className="px-6 py-4">
