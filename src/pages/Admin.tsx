@@ -171,8 +171,8 @@ export default function Admin() {
 
       const data = await fetchApi<any>(`/api/admin/users?page=${usersPage}&limit=20`);
       if (data && data.users) {
-        setUsers(data.users);
-        setUsersTotalPages(data.totalPages);
+        setUsers(data.users || []);
+        setUsersTotalPages(data.totalPages || 1);
       }
     } catch (error) {
       toast({ title: 'Failed to update role', description: 'Only Super Admin can do this', variant: 'destructive' });
@@ -250,8 +250,8 @@ export default function Admin() {
       // Reload events
       const data = await fetchApi<any>(`/api/events?page=${eventsPage}&limit=20`);
       if (data && data.events) {
-        setEvents(data.events);
-        setEventsTotalPages(data.totalPages);
+        setEvents(data.events || []);
+        setEventsTotalPages(data.totalPages || 1);
       }
     } catch (error) {
       toast({ title: 'Failed to save event', variant: 'destructive' });
