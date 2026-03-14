@@ -14,7 +14,7 @@ export async function initializeDatabase() {
   // Ensure the super-admin account always exists
   const admin = {
     id: 'super-admin-uuid',
-    email: process.env.ADMIN_EMAIL || 'admin@example.com',
+    email: process.env.ADMIN_EMAIL || '',
     username: process.env.ADMIN_USERNAME || 'admin',
     password: process.env.ADMIN_PASSWORD || 'admin123',
     name: process.env.ADMIN_NAME || 'Super Admin',
