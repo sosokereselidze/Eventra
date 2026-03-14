@@ -5,46 +5,11 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcryptjs';
 import { getCollections } from './db.js';
 
 export async function initializeDatabase() {
   const { users, events } = getCollections();
 
-  // Ensure the super-admin account always exists
-  const admin = {
-    id: 'super-admin-uuid',
-    email: process.env.ADMIN_EMAIL || '',
-    username: process.env.ADMIN_USERNAME || 'admin',
-    password: process.env.ADMIN_PASSWORD || 'admin123',
-    name: process.env.ADMIN_NAME || 'Super Admin',
-    isAdmin: true,
-  };
-
-  await users.updateOne(
-    {
-      $or: [
-        { email: admin.email },
-        { username: admin.username },
-      ]
-    },
-    {
-      $set: {
-        passwordHash: bcrypt.hashSync(admin.password, 10),
-        isAdmin: admin.isAdmin,
-        name: admin.name,
-        email: admin.email,
-        username: admin.username,
-      },
-      $setOnInsert: {
-        id: admin.id,
-        created_at: new Date().toISOString(),
-      }
-    },
-    { upsert: true }
-  );
-
-  console.log(`✓ Admin user synced: ${admin.username}`);
 
   // Seed one default sample event (only inserts if it doesn't already exist)
   const sampleEvent = {
