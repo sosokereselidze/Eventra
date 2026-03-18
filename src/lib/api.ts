@@ -42,7 +42,7 @@ export async function fetchApi<T>(
     const t = getToken();
     if (t) headers['Authorization'] = `Bearer ${t}`;
   }
-  const res = await fetch(getApiUrl(path), { ...init, headers });
+  const res = await fetch(getApiUrl(path), { ...init, headers, credentials: 'include' });
   const text = await res.text();
   let data: unknown;
   try {

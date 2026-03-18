@@ -34,7 +34,13 @@ export function verifyToken(token) {
 export async function requireAuth(req, res, next) {
   try {
     const auth = req.headers.authorization;
-    const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
+    let token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
+
+    // Also check for token in cookies
+    if (!token && req.cookies?.token) {
+      token = req.cookies.token;
+    }
+
     if (!token) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -60,7 +66,13 @@ export async function requireAuth(req, res, next) {
 export async function optionalAuth(req, res, next) {
   try {
     const auth = req.headers.authorization;
-    const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
+    let token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
+
+    // Check cookies as fallback
+    if (!token && req.cookies?.token) {
+      token = req.cookies.token;
+    }
+
     if (!token) {
       return next();
     }

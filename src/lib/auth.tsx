@@ -40,20 +40,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const loadSession = async () => {
-    if (!getToken()) {
-      setUser(null);
-      setSession(null);
-      setIsAdmin(false);
-      setIsLoading(false);
-      return;
-    }
     try {
+      // We still use getToken() as a hint, but we try anyway if it's missing 
+      // because we might have an HttpOnly cookie.
       const { user: u } = await fetchApi<{ user: AuthUser }>('/api/auth/me');
       setUser(u);
       setSession(u ? { user: u } : null);
-      if (u) await checkAdminRole();
-      else setIsAdmin(false);
+      if (u) {
+        await checkAdminRole();
+        // Ensure local token sync if available in response (some backends return it)
+      } else {
+        setIsAdmin(false);
+      }
     } catch {
+      // If unauthorized, just clear local state
       setToken(null);
       setUser(null);
       setSession(null);
@@ -121,10 +121,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    setToken(null);
-    setUser(null);
-    setSession(null);
-    setIsAdmin(false);
+    try {
+      await fetchApi('/api/auth/logout', { method: 'POST' });
+    } catch (e) {
+      console.error('Logout error:', e);
+    } finally {
+      setToken(null);
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+    }
   };
 
   return (

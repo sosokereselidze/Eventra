@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -46,6 +47,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(cookieParser());
 
 // Middleware to ensure DB connection and initialization
 let dbInitialized = false;
@@ -156,6 +158,15 @@ app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
     }
 
     const jwtToken = signToken({ userId: user.id, isAdmin: user.isAdmin });
+
+    // Set cookie
+    res.cookie('token', jwtToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (matches JWT_EXPIRY)
+    });
+
     res.json({ token: jwtToken, user: toPublicUser(user) });
 
   } catch (error) {
@@ -197,6 +208,15 @@ app.post(['/api/auth/signup', '/auth/signup'], async (req, res) => {
     };
     await users.insertOne(user);
     const token = signToken({ userId: id, email: user.email });
+
+    // Set cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
     return res.json({ user: toPublicUser(user), token });
   } catch (error) {
     console.error('Signup error:', error);
@@ -224,6 +244,15 @@ app.post(['/api/auth/login', '/auth/login'], async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     const token = signToken({ userId: user.id, email: user.email });
+
+    // Set cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
     return res.json({ user: toPublicUser(user), token });
   } catch (error) {
     console.error('Login error:', error);
@@ -235,7 +264,13 @@ app.get(['/api/auth/me', '/auth/me'], async (req, res) => {
   try {
     const { users } = getCollections();
     const auth = req.headers.authorization;
-    const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
+    let token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
+
+    // Check cookies fallback
+    if (!token && req.cookies?.token) {
+      token = req.cookies.token;
+    }
+
     if (!token) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -252,6 +287,15 @@ app.get(['/api/auth/me', '/auth/me'], async (req, res) => {
     console.error('Auth me error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+app.post(['/api/auth/logout', '/auth/logout'], (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+  });
+  return res.json({ success: true, message: 'Logged out successfully' });
 });
 
 app.get('/api/auth/verify-admin', requireAuth, (req, res) => {
