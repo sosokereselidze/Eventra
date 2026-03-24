@@ -21,12 +21,20 @@ const CATEGORIES = ['All', 'Music', 'Technology', 'Food & Drink', 'Sports', 'Art
 
 export default function Events() {
   const [page, setPage] = useState(1);
-  const { data: paginatedData, isLoading } = useEvents(page, 18);
-  const events = paginatedData?.events || [];
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [category, setCategory] = useState('All');
   const [sortBy, setSortBy] = useState('date');
+
+  const { data: paginatedData, isLoading } = useEvents(
+    page,
+    18,
+    search,
+    category === 'All' ? undefined : category,
+    sortBy === 'date' ? 'date:asc' : sortBy === 'price-low' ? 'price:asc' : sortBy === 'price-high' ? 'price:desc' : 'tickets_booked:desc'
+  );
+
+  const events = paginatedData?.events || [];
 
   useEffect(() => {
     const q = searchParams.get('q');
@@ -37,6 +45,7 @@ export default function Events() {
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
+    setPage(1); // Reset to page 1 on search
     if (value) {
       setSearchParams({ q: value }, { replace: true });
     } else {
@@ -45,39 +54,6 @@ export default function Events() {
       setSearchParams(newParams, { replace: true });
     }
   };
-
-  const filteredEvents = useMemo(() => {
-    if (!events) return [];
-
-    let filtered = events.filter((event) => {
-      const matchesSearch =
-        event.title.toLowerCase().includes(search.toLowerCase()) ||
-        (event.description || '').toLowerCase().includes(search.toLowerCase()) ||
-        event.location.toLowerCase().includes(search.toLowerCase());
-
-      const matchesCategory = category === 'All' || event.category === category;
-
-      return matchesSearch && matchesCategory;
-    });
-
-    // Sort
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'date':
-          return new Date(a.date).getTime() - new Date(b.date).getTime();
-        case 'price-low':
-          return Number(a.price) - Number(b.price);
-        case 'price-high':
-          return Number(b.price) - Number(a.price);
-        case 'popular':
-          return b.tickets_booked - a.tickets_booked;
-        default:
-          return 0;
-      }
-    });
-
-    return filtered;
-  }, [events, search, category, sortBy]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -126,13 +102,13 @@ export default function Events() {
           </div>
 
           {/* Category Pills */}
-          <div className="flex flex-wrap gap-2 mb-8">
+          <div className="flex flex-wrap gap-2 mb-8" role="group" aria-label="Filter by category">
             {CATEGORIES.map((cat) => (
               <Button
                 key={cat}
                 variant={category === cat ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setCategory(cat)}
+                onClick={() => { setCategory(cat); setPage(1); }}
                 className={category === cat ? 'glow' : ''}
               >
                 {cat}
@@ -141,10 +117,10 @@ export default function Events() {
           </div>
 
           {/* Results Count */}
-          <div className="flex items-center gap-2 mb-6">
+          <div className="flex items-center gap-2 mb-6" aria-live="polite">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">
-              {isLoading && !events.length ? 'Loading...' : `${paginatedData?.total || 0} events found`}
+              {isLoading ? 'Searching events...' : `${paginatedData?.total || 0} events found`}
             </span>
           </div>
 
@@ -160,8 +136,8 @@ export default function Events() {
                 </div>
               ))}
             </div>
-          ) : filteredEvents.length === 0 && !isLoading ? (
-            <div className="text-center py-20">
+          ) : events.length === 0 && !isLoading ? (
+            <div className="text-center py-20" role="alert">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
                 <Filter className="h-8 w-8 text-muted-foreground" />
               </div>
@@ -169,14 +145,14 @@ export default function Events() {
               <p className="text-muted-foreground mb-4">
                 Try adjusting your search or filters
               </p>
-              <Button variant="outline" onClick={() => { setSearch(''); setCategory('All'); }}>
+              <Button variant="outline" onClick={() => { setSearch(''); setCategory('All'); setPage(1); }}>
                 Clear Filters
               </Button>
             </div>
           ) : (
             <>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredEvents.map((event) => (
+                {events.map((event) => (
                   <EventCard
                     key={event.id}
                     id={event.id}

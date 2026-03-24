@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { fetchApi, getApiUrl } from '@/lib/api';
-import { Users, Calendar, TrendingUp, DollarSign, Activity, BarChart3, PieChart as PieChartIcon, ArrowUpRight, LayoutDashboard, Ticket, Plus, Pencil, Trash, MapPin, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import { Users, Calendar, TrendingUp, DollarSign, Activity, BarChart3, PieChart as PieChartIcon, ArrowUpRight, LayoutDashboard, Ticket, Plus, Pencil, Trash, MapPin, Image as ImageIcon, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { useAuth } from '@/lib/auth';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,19 +16,10 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const CATEGORIES = [
-  "Music",
-  "Conference",
-  "Workshop",
-  "Sports",
-  "Technology",
-  "Art",
-  "Networking",
-  "Entertainment",
-  "Health",
-  "Education",
-  "Other"
+  "Music", "Conference", "Workshop", "Sports", "Technology", "Art", "Networking", "Entertainment", "Health", "Education", "Other"
 ];
 
 interface Analytics {
@@ -42,7 +33,6 @@ interface Analytics {
 }
 
 interface User {
-  _id: string;
   id: string;
   name: string;
   email: string;
@@ -91,103 +81,91 @@ const DEFAULT_FORM = {
 export default function Admin() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'bookings' | 'events'>('dashboard');
-
-  const [analytics, setAnalytics] = useState<Analytics | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
 
   const [usersPage, setUsersPage] = useState(1);
   const [bookingsPage, setBookingsPage] = useState(1);
   const [eventsPage, setEventsPage] = useState(1);
 
-  const [usersTotalPages, setUsersTotalPages] = useState(1);
-  const [bookingsTotalPages, setBookingsTotalPages] = useState(1);
-  const [eventsTotalPages, setEventsTotalPages] = useState(1);
-
-  const [loading, setLoading] = useState(false);
-
   // Event Dialog State
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isaccessing, setIsAccessing] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
   const [formData, setFormData] = useState(DEFAULT_FORM);
   const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    const loadDashboard = async () => {
-      try {
-        const data = await fetchApi<Analytics>('/api/admin/analytics');
-        setAnalytics(data);
-      } catch (error) {
-        toast({ title: 'Error loading analytics', variant: 'destructive' });
-      }
-    };
-    loadDashboard();
-  }, [toast]);
-  // Lazy load tab data
-  useEffect(() => {
-    if (activeTab === 'users') {
-      setLoading(true);
-      fetchApi<any>(`/api/admin/users?page=${usersPage}&limit=20`)
-        .then(data => {
-          const items = data?.users || (Array.isArray(data) ? data : []);
-          setUsers(items);
-          setUsersTotalPages(data?.totalPages || 1);
-        })
-        .catch(() => toast({ title: 'Error loading users', variant: 'destructive' }))
-        .finally(() => setLoading(false));
-    }
-    if (activeTab === 'bookings') {
-      setLoading(true);
-      fetchApi<any>(`/api/admin/bookings?page=${bookingsPage}&limit=20`)
-        .then(data => {
-          const items = data?.bookings || (Array.isArray(data) ? data : []);
-          setBookings(items);
-          setBookingsTotalPages(data?.totalPages || 1);
-        })
-        .catch(() => toast({ title: 'Error loading bookings', variant: 'destructive' }))
-        .finally(() => setLoading(false));
-    }
-    if (activeTab === 'events') {
-      setLoading(true);
-      fetchApi<any>(`/api/events?page=${eventsPage}&limit=20`)
-        .then((data) => {
-          const items = data?.events || (Array.isArray(data) ? data : []);
-          setEvents(items);
-          setEventsTotalPages(data?.totalPages || 1);
-        })
-        .catch(() => toast({ title: 'Error loading events', variant: 'destructive' }))
-        .finally(() => setLoading(false));
-    }
-  }, [activeTab, usersPage, bookingsPage, eventsPage, toast]);
+  // React Query: Analytics
+  const { data: analytics, isLoading: analyticsLoading } = useQuery<Analytics>({
+    queryKey: ['admin', 'analytics'],
+    queryFn: () => fetchApi<Analytics>('/api/admin/analytics'),
+  });
 
-  const handleRoleUpdate = async (userId: string, newStatus: boolean) => {
-    try {
-      await fetchApi(`/api/admin/users/${userId}/role`, {
+  // React Query: Users
+  const { data: usersData, isLoading: usersLoading } = useQuery({
+    queryKey: ['admin', 'users', usersPage],
+    queryFn: () => fetchApi<any>(`/api/admin/users?page=${usersPage}&limit=20`),
+    enabled: activeTab === 'users'
+  });
+
+  // React Query: Bookings
+  const { data: bookingsData, isLoading: bookingsLoading } = useQuery({
+    queryKey: ['admin', 'bookings', bookingsPage],
+    queryFn: () => fetchApi<any>(`/api/admin/bookings?page=${bookingsPage}&limit=20`),
+    enabled: activeTab === 'bookings'
+  });
+
+  // React Query: Events
+  const { data: eventsData, isLoading: eventsLoading } = useQuery({
+    queryKey: ['admin', 'events', eventsPage],
+    queryFn: () => fetchApi<any>(`/api/events?page=${eventsPage}&limit=20`),
+    enabled: activeTab === 'events'
+  });
+
+  // Mutations
+  const roleMutation = useMutation({
+    mutationFn: ({ userId, isAdmin }: { userId: string, isAdmin: boolean }) =>
+      fetchApi(`/api/admin/users/${userId}/role`, {
         method: 'PUT',
-        body: JSON.stringify({ isAdmin: newStatus })
+        body: JSON.stringify({ isAdmin })
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      toast({ title: 'User role updated' });
+    },
+    onError: () => toast({ title: 'Failed to update role', variant: 'destructive' })
+  });
+
+  const deleteEventMutation = useMutation({
+    mutationFn: (id: string) => fetchApi(`/api/events/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'events'] });
+      toast({ title: 'Event deleted' });
+    },
+    onError: () => toast({ title: 'Failed to delete event', variant: 'destructive' })
+  });
+
+  const saveEventMutation = useMutation({
+    mutationFn: (payload: any) => {
+      const isUpdate = !!currentEvent;
+      return fetchApi(isUpdate ? `/api/events/${currentEvent.id}` : '/api/events', {
+        method: isUpdate ? 'PUT' : 'POST',
+        body: JSON.stringify(payload)
       });
-
-      toast({ title: `User role updated`, description: `User is now ${newStatus ? 'an Admin' : 'a regular User'}` });
-
-      const data = await fetchApi<any>(`/api/admin/users?page=${usersPage}&limit=20`);
-      if (data && data.users) {
-        setUsers(data.users || []);
-        setUsersTotalPages(data.totalPages || 1);
-      }
-    } catch (error) {
-      toast({ title: 'Failed to update role', description: 'Only Super Admin can do this', variant: 'destructive' });
-    }
-  };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'events'] });
+      setIsDialogOpen(false);
+      toast({ title: currentEvent ? 'Event updated' : 'Event created' });
+    },
+    onError: () => toast({ title: 'Failed to save event', variant: 'destructive' })
+  });
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append('image', file);
+    const uploadFormData = new FormData();
+    uploadFormData.append('image', file);
 
     setUploading(true);
     try {
@@ -197,79 +175,26 @@ export default function Admin() {
         headers: {
           'Authorization': `Bearer ${token}`
         },
-        body: formData
+        body: uploadFormData
       });
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Upload failed');
-      }
-
+      if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
       setFormData(prev => ({ ...prev, image_url: data.url }));
-      toast({ title: 'Image uploaded successfully' });
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      toast({
-        title: 'Upload failed',
-        description: error.message || 'Check server connection',
-        variant: 'destructive'
-      });
+      toast({ title: 'Image uploaded' });
+    } catch (error) {
+      toast({ title: 'Upload failed', variant: 'destructive' });
     } finally {
       setUploading(false);
     }
   };
 
-  const handleSaveEvent = async () => {
-    try {
-      if (!formData.title || !formData.date || !formData.price) {
-        return toast({ title: 'Please fill in required fields', variant: 'destructive' });
-      }
-
-      const payload = {
-        ...formData,
-        // Ensure number types
-        price: Number(formData.price),
-        tickets_available: Number(formData.tickets_available)
-      };
-
-      if (currentEvent) {
-        // Update
-        await fetchApi(`/api/events/${currentEvent.id}`, {
-          method: 'PUT',
-          body: JSON.stringify(payload)
-        });
-        toast({ title: 'Event updated' });
-      } else {
-        // Create
-        await fetchApi('/api/events', {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
-        toast({ title: 'Event created' });
-      }
-
-      setIsDialogOpen(false);
-      // Reload events
-      const data = await fetchApi<any>(`/api/events?page=${eventsPage}&limit=20`);
-      if (data && data.events) {
-        setEvents(data.events || []);
-        setEventsTotalPages(data.totalPages || 1);
-      }
-    } catch (error) {
-      toast({ title: 'Failed to save event', variant: 'destructive' });
+  const handleSaveEvent = () => {
+    if (!formData.title || !formData.date || !formData.category) {
+      return toast({ title: 'Missing required fields', variant: 'destructive' });
     }
-  };
-
-  const handleDeleteEvent = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this event?')) return;
-    try {
-      await fetchApi(`/api/events/${id}`, { method: 'DELETE' });
-      toast({ title: 'Event deleted' });
-      setEvents(events.filter(e => e.id !== id));
-    } catch (error) {
-      toast({ title: 'Failed to delete', variant: 'destructive' });
-    }
+    const payload = { ...formData, price: Number(formData.price), tickets_available: Number(formData.tickets_available) };
+    saveEventMutation.mutate(payload);
   };
 
   const openAddDialog = () => {
@@ -283,7 +208,7 @@ export default function Admin() {
     setFormData({
       title: event.title,
       description: event.description,
-      date: event.date.split('T')[0], // Simple date format for input
+      date: event.date.split('T')[0],
       location: event.location,
       price: event.price,
       tickets_available: event.tickets_available,
@@ -297,26 +222,28 @@ export default function Admin() {
   const isSuperAdmin = user?.username === (import.meta.env.VITE_ADMIN_USERNAME || 'admin');
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
-  if (!analytics) {
+  const users = usersData?.users || [];
+  const usersTotalPages = usersData?.totalPages || 1;
+  const bookings = bookingsData?.bookings || [];
+  const bookingsTotalPages = bookingsData?.totalPages || 1;
+  const events = eventsData?.events || [];
+  const eventsTotalPages = eventsData?.totalPages || 1;
+
+  if (analyticsLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-primary/20"></div>
-          <div className="h-4 w-32 bg-muted rounded"></div>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center" aria-live="polite" aria-busy="true">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
 
+  if (!analytics) return null;
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
-      <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-
       <Navbar />
 
-      <main className="container mx-auto px-4 pt-28 pb-12 relative z-10">
+      <main id="main-content" className="container mx-auto px-4 pt-28 pb-12 relative z-10" aria-label="Admin Dashboard">
         <div className="mb-8 animate-fade-in flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-3 tracking-tight">
@@ -418,7 +345,7 @@ export default function Admin() {
                               <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => openEditDialog(e)}>
                                 <Pencil className="h-4 w-4" />
                               </Button>
-                              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteEvent(e.id)}>
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => { if(confirm('Delete event?')) deleteEventMutation.mutate(e.id); }}>
                                 <Trash className="h-4 w-4" />
                               </Button>
                             </div>
@@ -435,18 +362,20 @@ export default function Admin() {
                       variant="outline"
                       size="icon"
                       onClick={() => setEventsPage(p => Math.max(1, p - 1))}
-                      disabled={eventsPage === 1 || loading}
+                      disabled={eventsPage === 1 || eventsLoading}
                       className="h-8 w-8 rounded-full"
+                      aria-label="Previous page"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <span className="text-sm font-medium">Page {eventsPage} of {eventsTotalPages}</span>
+                    <span className="text-sm font-medium" aria-live="polite">Page {eventsPage} of {eventsTotalPages}</span>
                     <Button
                       variant="outline"
                       size="icon"
                       onClick={() => setEventsPage(p => Math.min(eventsTotalPages, p + 1))}
-                      disabled={eventsPage === eventsTotalPages || loading}
+                      disabled={eventsPage === eventsTotalPages || eventsLoading}
                       className="h-8 w-8 rounded-full"
+                      aria-label="Next page"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -739,26 +668,28 @@ export default function Admin() {
                             {isSuperAdmin && (
                               <td className="px-6 py-4 text-right">
                                 {u.username !== (import.meta.env.VITE_ADMIN_USERNAME || 'admin') && (
-                                  u.isAdmin ? (
-                                    <Button
-                                      size="sm"
-                                      variant="destructive"
-                                      className="h-7 text-xs"
-                                      onClick={() => handleRoleUpdate(u.id, false)}
-                                    >
-                                      Revoke Admin
-                                    </Button>
-                                  ) : (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-7 text-xs border-primary text-primary hover:bg-primary/10"
-                                      onClick={() => handleRoleUpdate(u.id, true)}
-                                    >
-                                      Make Admin
-                                    </Button>
-                                  )
-                                )}
+                                    u.isAdmin ? (
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        className="h-7 text-xs"
+                                        onClick={() => roleMutation.mutate({ userId: u.id, isAdmin: false })}
+                                        disabled={roleMutation.isPending}
+                                      >
+                                        Revoke Admin
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 text-xs border-primary text-primary hover:bg-primary/10"
+                                        onClick={() => roleMutation.mutate({ userId: u.id, isAdmin: true })}
+                                        disabled={roleMutation.isPending}
+                                      >
+                                        Make Admin
+                                      </Button>
+                                    )
+                                  )}
                               </td>
                             )}
                           </tr>

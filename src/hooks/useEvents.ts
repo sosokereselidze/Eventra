@@ -36,10 +36,18 @@ export interface PaginatedEvents {
   totalPages: number;
 }
 
-export function useEvents(page: number = 1, limit: number = 20) {
+export function useEvents(page: number = 1, limit: number = 20, search?: string, category?: string, sort?: string) {
+  const queryParams = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+  if (search) queryParams.set('search', search);
+  if (category && category !== 'All') queryParams.set('category', category);
+  if (sort) queryParams.set('sort', sort);
+
   return useQuery({
-    queryKey: ['events', page, limit],
-    queryFn: () => fetchApi<PaginatedEvents>(`/api/events?page=${page}&limit=${limit}`),
+    queryKey: ['events', page, limit, search, category, sort],
+    queryFn: () => fetchApi<PaginatedEvents>(`/api/events?${queryParams.toString()}`),
   });
 }
 
