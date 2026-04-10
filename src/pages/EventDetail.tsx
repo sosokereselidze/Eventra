@@ -1,6 +1,6 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Calendar, MapPin, Users, ArrowLeft, Share2, Heart, Ticket, Clock } from 'lucide-react';
+import { Calendar, MapPin, Users, ArrowLeft, Share2, Heart, Ticket, Clock, Download } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -231,12 +231,23 @@ export default function EventDetail() {
                     </Button>
                   ) : (
                     <Button
-                      className="w-full h-16 rounded-2xl text-lg font-bold glow shadow-[0_0_20px_rgba(var(--primary),0.3)]"
+                      className="w-full h-16 rounded-2xl text-lg font-bold glow shadow-[0_0_20px_rgba(var(--primary),0.3)] mb-4"
                       size="lg"
                       onClick={handleBook}
                       disabled={bookEvent.isPending}
                     >
                       {bookEvent.isPending ? 'Booking...' : 'Book Tickets Now'}
+                    </Button>
+                  )}
+
+                  {!isBooked && availableTickets > 0 && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full h-14 rounded-2xl bg-white/5 border-white/10 hover:bg-white/10 text-white font-bold gap-2"
+                      onClick={() => window.open(`/api/bookings/ticket-stub?title=${encodeURIComponent(event.title)}&date=${event.date}&location=${encodeURIComponent(event.location)}`, '_blank')}
+                    >
+                      <Download className="h-5 w-5" />
+                      Add to Calendar
                     </Button>
                   )}
 

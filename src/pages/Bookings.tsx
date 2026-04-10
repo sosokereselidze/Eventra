@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Calendar, MapPin, Ticket, Trash2, ExternalLink } from 'lucide-react';
+import { Calendar, MapPin, Ticket, Trash2, ExternalLink, Download, QrCode } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -99,12 +99,17 @@ export default function Bookings() {
                   >
                     <div className="flex flex-col md:flex-row gap-6">
                       {/* Image */}
-                      <div className="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0">
+                      <div className="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0 relative group">
                         <img
                           src={event.image_url || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400'}
                           alt={event.title}
                           className="w-full h-full object-cover"
                         />
+                        {!isPast && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <QrCode className="h-12 w-12 text-white" />
+                          </div>
+                        )}
                       </div>
 
                       {/* Content */}
@@ -145,6 +150,18 @@ export default function Bookings() {
                               View Event
                             </Link>
                           </Button>
+
+                          {!isPast && (
+                            <Button 
+                              variant="secondary" 
+                              size="sm" 
+                              className="gap-2"
+                              onClick={() => window.open(`/api/bookings/${booking.id}/ticket`, '_blank')}
+                            >
+                              <Download className="h-4 w-4" />
+                              Ticket
+                            </Button>
+                          )}
                           
                           {!isPast && (
                             <AlertDialog>

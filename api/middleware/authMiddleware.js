@@ -17,11 +17,17 @@ export async function requireAuth(req, res, next) {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    if (!decoded) {
+    if (!decoded || !decoded.userId) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
-    const user = await User.findById(decoded.id).select('-password');
+    // Try to find user by the custom 'id' field first (UUID)
+    let user = await User.findOne({ id: decoded.userId }).select('-password');
+    
+    // Fallback to _id if not found by custom id
+    if (!user && mongoose.Types.ObjectId.isValid(decoded.userId)) {
+      user = await User.findById(decoded.userId).select('-password');
+    }
 
     if (!user) {
       return res.status(401).json({ error: 'User not found' });
@@ -30,6 +36,7 @@ export async function requireAuth(req, res, next) {
     req.user = user;
     next();
   } catch (error) {
+    console.error('Auth check error:', error);
     res.status(401).json({ error: 'Invalid or expired token' });
   }
 }
@@ -48,9 +55,15 @@ export async function optionalAuth(req, res, next) {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    if (!decoded) return next();
+    if (!decoded || !decoded.userId) return next();
 
-    const user = await User.findById(decoded.id).select('-password');
+    // Try custom 'id' first
+    let user = await User.findOne({ id: decoded.userId }).select('-password');
+    
+    // Fallback to _id
+    if (!user && mongoose.Types.ObjectId.isValid(decoded.userId)) {
+      user = await User.findById(decoded.userId).select('-password');
+    }
 
     if (user) req.user = user;
     next();

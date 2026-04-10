@@ -12,7 +12,7 @@ export const getBookings = async (req, res, next) => {
     // Map for frontend compatibility
     const formatted = bookings.map(b => ({
       ...b.toJSON(),
-      event: b.event_id
+      events: b.event_id
     }));
     
     res.json(formatted);
@@ -52,6 +52,57 @@ export const createBooking = async (req, res, next) => {
     res.status(400).json({ success: false, error: error.message });
   } finally {
     session.endSession();
+  }
+};
+
+export const getBookingTicket = async (req, res, next) => {
+  try {
+    const booking = await Booking.findOne({ _id: req.params.id, user_id: req.user.id })
+      .populate('event_id');
+    
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+
+    const event = booking.event_id;
+    const ticketData = `
+BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:${event.title}
+DTSTART:${new Date(event.date).toISOString().replace(/-|:|\.\d+/g, '')}
+LOCATION:${event.location}
+DESCRIPTION:Booking ID: ${booking._id}\\nTickets: ${booking.quantity}
+END:VEVENT
+END:VCALENDAR`;
+
+    res.setHeader('Content-Type', 'text/calendar');
+    res.setHeader('Content-Disposition', `attachment; filename=ticket-${booking._id}.ics`);
+    res.send(ticketData.trim());
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getEventTicketStub = async (req, res, next) => {
+  try {
+    const { title, date, location } = req.query;
+    if (!title || !date) return res.status(400).json({ error: 'Title and date are required' });
+
+    const ticketData = `
+BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:${title}
+DTSTART:${new Date(date).toISOString().replace(/-|:|\.\d+/g, '')}
+LOCATION:${location || 'TBA'}
+DESCRIPTION:Eventra - Discover and book incredible experiences.
+END:VEVENT
+END:VCALENDAR`;
+
+    res.setHeader('Content-Type', 'text/calendar');
+    res.setHeader('Content-Disposition', `attachment; filename=event.ics`);
+    res.send(ticketData.trim());
+  } catch (error) {
+    next(error);
   }
 };
 

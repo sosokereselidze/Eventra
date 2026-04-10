@@ -7,6 +7,12 @@ import { validate } from '../middleware/validationMiddleware.js';
 const router = express.Router();
 
 router.get('/', requireAuth, bookingController.getBookings);
+router.get('/ticket-stub', bookingController.getEventTicketStub);
+router.get('/:id/ticket', [
+  requireAuth,
+  param('id').notEmpty().withMessage('Booking ID is required'),
+  validate
+], bookingController.getBookingTicket);
 router.post('/', [
   requireAuth,
   body('eventId').notEmpty().withMessage('eventId is required'),

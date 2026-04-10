@@ -10,7 +10,8 @@ const eventSchema = new mongoose.Schema({
   tickets_booked: { type: Number, default: 0 },
   category: { type: String, required: true, index: true },
   image_url: { type: String },
-  featured: { type: Boolean, default: false, index: true }
+  featured: { type: Boolean, default: false, index: true },
+  id: { type: String, unique: true, sparse: true, index: true }
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
 // Virtual for ID to maintain compatibility with existing frontend

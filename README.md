@@ -1,6 +1,6 @@
-# EventFlow Pro
+# Eventra
 
-EventFlow Pro is a high-performance, secure, and accessible event management platform built with the MERN stack. Formally refactored for **Maximum Score (10/10)** compliance.
+Eventra is a high-performance, secure, and accessible event management platform built with the MERN stack. Formally refactored for **Maximum Score (10/10)** compliance.
 
 ## 🚀 Key Features
 
